@@ -7,6 +7,9 @@ int currentImage = -1;
 PImage img;
 String currentDescription;
 PFont font;
+boolean saveImages = true;
+
+boolean saved = false;
 
 void setup() {
   font = loadFont("Tahoma-48.vlw");
@@ -34,12 +37,13 @@ void draw() {
   
   
   fill(0);
-
   text(formattedText, x + 1, y + 1);
-
   fill(255);
-
   text(formattedText, x, y);
+  if(saveImages && !saved){
+    saveImage();
+    saved = true;
+  }
 }
 
 int numLines(String text){
@@ -84,6 +88,7 @@ void nextImage() {
   currentDescription = descriptionForImage(filenames[currentImage]);
   println(currentDescription);
   img = loadImage(dataPath(folderName + "/" + filenames[currentImage]));
+  saved = false;
 }
 
 String descriptionForImage(String filename){
