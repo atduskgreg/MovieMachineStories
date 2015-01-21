@@ -2,9 +2,8 @@ import java.awt.Rectangle;
 
 class ColorPalettePass extends AnalysisPass {
   PaletteDetector palette;
-  int numColors = 5;
-
-
+  int numColors = 10;
+  
   ColorPalettePass(PApplet applet) {
     super(applet);
   }
@@ -16,15 +15,29 @@ class ColorPalettePass extends AnalysisPass {
   void analyze(PImage src) {
     palette = new PaletteDetector(applet, applet.width, applet.height, numColors);
     palette.loadImage(src);
+    palette.calculatePalette(); 
   }
 
   void draw(PGraphics canvas) {
     canvas.pushStyle();
-    for (int i = 0; i < palette.numColors (); i++) {
+    canvas.noStroke();
+    
+    int totalSize = 0;
+    
+    println(palette.totalSize());
+    
+    int x = 0;
+    for (int i = 0; i < palette.numColors(); i++) {
+      println("["+i+"] "+ (float)palette.getSizes()[i] +" "  + ((float)palette.getSizes()[i]/ palette.totalSize()));
+      float scalingFactor = (float)palette.getSizes()[i] / palette.totalSize();
+      float sectionWidth = scalingFactor * canvas.width/2;
+      
       canvas.fill(palette.getColors()[i]);
-      int t = (canvas.height-20)/ palette.numColors();
-      canvas.rect(0, t*i, width+1, t);
+      canvas.rect(x, 0, sectionWidth, canvas.height);
+      x += sectionWidth;
     }
+    
+    println("x: " + x + "canvas width: " + canvas.width/2);
     
     canvas.popStyle();
 

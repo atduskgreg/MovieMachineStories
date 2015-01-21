@@ -20,7 +20,7 @@ void setup(){
   
   
   opencv = new OpenCV(this, w, h);
-  canvas = createGraphics(w,h);
+  canvas = createGraphics(w*2,h);
   
 
   for(int i = 0; i < filenames.length; i++){
@@ -42,7 +42,7 @@ void setup(){
     fd.analyze(opencv.getGray());
     fd.draw(canvas);
     
-
+    canvas.image(img, w, 0);
     
     canvas.endDraw();
     canvas.save("analysis/analysis-"+filenames[i]);

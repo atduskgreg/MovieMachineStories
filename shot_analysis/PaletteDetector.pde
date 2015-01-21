@@ -1,5 +1,6 @@
 class PaletteDetector {
   color[] palette;
+  int[] sizes;
   int numColors;
   OpenCV opencv;
   boolean paletteStale;
@@ -7,14 +8,16 @@ class PaletteDetector {
   PaletteDetector(PApplet parent, int w, int h, int numColors) {
     this.numColors = numColors;
     palette = new color[numColors];
-    opencv = new OpenCV(parent, w, h);
-    opencv.useColor(HSB);
+    this.opencv = new OpenCV(parent, w, h);
+    this.opencv.useColor(HSB);
+    
+//    sizes = new int[numColors];
 
     paletteStale = true;
   }
 
   void loadImage(PImage img) {
-    opencv.loadImage(img);
+    this.opencv.loadImage(img);
     paletteStale = true;
   }
 
@@ -27,6 +30,18 @@ class PaletteDetector {
     return palette;
   }
 
+  int[] getSizes(){
+    return sizes;
+  }
+  
+  int totalSize(){
+    int result = 0;
+    for(int i = 0; i < sizes.length; i++){
+      result += sizes[i];
+    }
+    return result;
+  }
+
   int numColors() {
     return numColors;
   }
@@ -34,10 +49,10 @@ class PaletteDetector {
   void calculatePalette() {
     pushStyle();
     colorMode(HSB);
-    Mat h = opencv.getH().reshape(1, opencv.width*opencv.height);  
+    Mat h = this.opencv.getH().reshape(1, opencv.width*opencv.height);  
     Core.multiply(h, new Scalar(255.0/180.0), h);
-    Mat s = opencv.getS().reshape(1, opencv.width*opencv.height);  
-    Mat v = opencv.getV().reshape(1, opencv.width*opencv.height);
+    Mat s = this.opencv.getS().reshape(1, opencv.width*opencv.height);  
+    Mat v = this.opencv.getV().reshape(1, opencv.width*opencv.height);
 
     ArrayList<Mat> cols = new ArrayList<Mat>();
     cols.add(h);
@@ -58,29 +73,30 @@ class PaletteDetector {
     //== Begin horrible process of sorting colors based on size of cluster
 
     HashMap<Integer, Integer> labelScores = new HashMap<Integer, Integer>();
+    this.sizes = new int[numColors];
 
-    int[] scores = new int[numColors];
+    println("SCORES==========");
     for (int i = 0; i < numColors; i++) {
       Mat thisLabel = new Mat();
       Core.inRange(labels, new Scalar(i), new Scalar(i), thisLabel);
       int score = Core.countNonZero(thisLabel);
       labelScores.put(score, i);
-      scores[i] = score;
+      println(i + ": " + score);
+      this.sizes[i] = score;
     }
 
-    Arrays.sort(scores);
+    Arrays.sort(sizes);
 
     color[] unorderedClusters = new color[numColors];
 
     for (int i  = 0; i < centers.height(); i++) {
-      println(centers.get(i, 0)[0] + " " + centers.get(i, 1)[0] + " " + centers.get(i, 2)[0]);
       unorderedClusters[i] = color((float)centers.get(i, 0)[0], (float)centers.get(i, 1)[0], (float)centers.get(i, 2)[0]);
     }
 
     int[] sortedIndices = new int[numColors];
     int j = 0;
     for (int i = numColors-1; i >= 0; i--) {
-      sortedIndices[j] = labelScores.get(scores[i]);
+      sortedIndices[j] = labelScores.get(this.sizes[i]);
       j++;
     }
 
@@ -93,6 +109,7 @@ class PaletteDetector {
     for(int i = 0; i < palette.length; i++){
       palette[i] = color(red(palette[i]), green(palette[i]), blue(palette[i]));
     }
+
 
     paletteStale = false;
   }
