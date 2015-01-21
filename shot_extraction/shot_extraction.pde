@@ -15,15 +15,24 @@ int minFramesBetweenEdits = 10;
 
 ArrayList<PImage> editFrames;
 
+OpenCV opencv;
+PGraphics canvas;
+FlowPass flowPass;
 
-void setup(){
+void setup() {
   size(w, h*2);
-  
+
   mov = new Movie(this, "arabia.mov");
-  
+
+  opencv = new OpenCV(this, w, h);
+  canvas = createGraphics(w*2, h);
+
+
   editDetector = new EditDetector(this, bufferSize, w, h);
   editFrames = new ArrayList<PImage>();
   
+  flowPass = new FlowPass();
+
   mov.play();
 }
 
@@ -35,8 +44,11 @@ void draw() {
   image(mov, 0, 0);
 
   editDetector.update(mov);
+  opencv.loadImage(mov);
 
-  if(editDetector.editFound()) {
+  flowPass.update(opencv.getGray());
+
+  if (editDetector.editFound()) {
     saveCurrentFrame();
   }
 
@@ -46,7 +58,7 @@ void draw() {
   pushMatrix();
   scale(graphScale);
 
-  
+
   ArrayList<Integer> diffs = editDetector.getDiffLog();
 
   if (diffs.size()*graphScale > width/2) {      
@@ -54,7 +66,7 @@ void draw() {
   }
 
   beginShape();
-  for (int i = 0; i < diffs.size(); i++) {
+  for (int i = 0; i < diffs.size (); i++) {
     Integer diffSize = diffs.get(i);
 
     float y = map(diffSize, 0, w*h, 100, 0);    
@@ -62,7 +74,7 @@ void draw() {
   }
   endShape();
 
-  for (Integer i : editDetector.getEditLog()) {
+  for (Integer i : editDetector.getEditLog ()) {
     pushStyle();
     fill(0, 255, 0);
     noStroke();
@@ -91,7 +103,7 @@ void drawFrames() {
     translate(0, int(-(currRow - (numImageRows-1))*frameHeight));
   }
 
-  for (int i = 0; i < editFrames.size(); i++) {    
+  for (int i = 0; i < editFrames.size (); i++) {    
     image(editFrames.get(i), col*frameWidth, row*frameHeight + h, frameWidth, frameHeight);
 
     col++;
@@ -111,7 +123,23 @@ void saveCurrentFrame() {
   editFrames.add(editFrame);
 
   if (saveFrames) {
-    editFrame.save("shots/"+editDetector.getEditLog().get(editDetector.getEditLog().size() - 1)+"-frame.png");
+
+
+
+
+    canvas.beginDraw();
+    canvas.background(0);
+
+    FaceDetectionPass fd = new FaceDetectionPass();
+    fd.analyze(opencv.getGray());
+    fd.draw(canvas);
+    flowPass.draw(canvas);
+    flowPass.reset();
+    canvas.image(editFrame, opencv.width, 0);
+    canvas.endDraw();
+    canvas.save("analysis/analysis-"+editDetector.getEditLog().get(editDetector.getEditLog().size() - 1)+"-frame.png");
+
+    //    editFrame.save("shots/"+editDetector.getEditLog().get(editDetector.getEditLog().size() - 1)+"-frame.png");
   }
 }
 void movieEvent(Movie m) {

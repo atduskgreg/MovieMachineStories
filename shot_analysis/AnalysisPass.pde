@@ -1,5 +1,8 @@
 class AnalysisPass {
-  AnalysisPass(){}
+  PApplet applet;
+  AnalysisPass(PApplet applet){
+    this.applet = applet;
+  }
   void analyze(Mat m){}
   void draw(){}
 }
